@@ -1,11 +1,11 @@
 # serverless-disable-request-validators
-[![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com) [![npm version](https://badge.fury.io/js/serverless-disable-request-validators.svg)](https://badge.fury.io/js/serverless-disable-request-validators) [![Build Status](https://travis-ci.org/jweyrich/serverless-disable-request-validators.svg?branch=master)](https://travis-ci.org/prisma/serverless-plugin-typescript)
+[![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com) [![npm version](https://badge.fury.io/js/serverless-disable-request-validators.svg)](https://badge.fury.io/js/serverless-disable-request-validators) [![Build Status](https://travis-ci.org/jweyrich/serverless-disable-request-validators.svg?branch=master)](https://travis-ci.org/jweyrich/serverless-disable-request-validators)
 
 Serverless v2 plugin to disable API Gateway request validators.
 
 ## What it does
 
-It gives you the [ability to disable the API Gateway Request Validator on v2](https://github.com/serverless/serverless/issues/10229) until the Serverless Framework team introduces an opt-out flag or another mechanism to avoid the automatic creation of Request Validators in API Gateway when your Lambda functions have an schema associated with them.
+It gives you the [ability to disable the API Gateway Request Validator on v2](https://github.com/serverless/serverless/issues/10229) until the Serverless Framework team introduces an opt-out flag or another mechanism to avoid the [automatic creation of Request Validators in API Gateway](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/#request-schema-validators) when your Lambda functions have an schema associated with them.
 
 There are 3 legitimate use cases for these schemas:
 
@@ -23,6 +23,8 @@ yarn add --dev serverless-disable-request-validators
 npm install -D serverless-disable-request-validators
 ```
 
+## Enable the plugin
+
 Add the following plugin to your `serverless.yml`:
 
 ```yaml
@@ -32,4 +34,4 @@ plugins:
 
 ## Configure
 
-There's nothing to configure! ;-)
+No extra configuration is required in this version! ;-)
