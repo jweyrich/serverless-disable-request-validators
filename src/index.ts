@@ -1,3 +1,15 @@
+interface CfnResourcePair {
+  name: string;
+  resource: Serverless.CfnResource;
+}
+
+enum PluginAction {
+  // Disable the `body` and `parameters` validations directly in the validator resources.
+  DISABLE = 'disable',
+  // Delete the AWS::ApiGateway::RequestValidator resources and all their references.
+  DELETE = 'delete',
+}
+
 class Plugin {
   readonly pluginName = 'serverless-disable-request-validators';
   readonly serverless: Serverless.Instance;
@@ -8,7 +20,7 @@ class Plugin {
   constructor(serverless: Serverless.Instance, options: Serverless.Options) {
     this.serverless = serverless;
     this.hooks = {
-      'before:package:finalize': () => this.disableRequestValidators(),
+      'before:package:finalize': () => this.execute(),
     };
   }
 
@@ -22,28 +34,95 @@ class Plugin {
     }
   }
 
-  disableRequestValidators() {
-    this.validate();
-    const service = this.serverless.service;
-    // console.debug('Custom plugin config: ', service[this.pluginName]['my-plugin-config']);
-    const compiledTemplate = service.provider.compiledCloudFormationTemplate;
-    const resources = compiledTemplate.Resources;
-    const validators = Object.values(resources).filter((value) => {
-      return value.Type === 'AWS::ApiGateway::RequestValidator';
-    });
-    this.log(`Found ${validators.length} request validator(s)`);
-    // console.debug('Validators(before): ', validators);
-    validators.forEach((v) => this.disableValidator(v));
-    // console.debug('Validators(after): ', validators);
+  // Original code from https://stackoverflow.com/a/69456116/298054
+  stringToEnumValue<T extends Record<string, string>, K extends keyof T>(
+    enumObj: T,
+    value: string,
+  ): T[keyof T] | undefined {
+    return enumObj[
+      Object.keys(enumObj).filter(
+        (k) => enumObj[k as K].toString() === value,
+      )[0] as keyof typeof enumObj
+    ];
   }
 
-  disableValidator(validator: Serverless.CfnResource) {
-    const properties = validator.Properties
+  filterResourcesByType(resources: Serverless.CfnResourceList, type: Serverless.CfnResourceType): CfnResourcePair[] {
+    const filtered = Object.entries(resources).filter((obj: [string, Serverless.CfnResource]) => {
+      const value = obj[1];
+      return value.Type === type;
+    });
+    return filtered.map((obj) => {
+      return {
+        name: obj[0],
+        resource: obj[1],
+      };
+    });
+  }
+
+  execute() {
+    this.validate();
+    const service = this.serverless.service;
+
+    const pluginConfig = service.custom[this.pluginName];
+    const actionStr: string = pluginConfig ? pluginConfig['action'] : 'disable';
+    const action = this.stringToEnumValue(PluginAction, actionStr);
+    this.log(`Plugin configuration: action=${action}`);
+
+    const compiledTemplate = service.provider.compiledCloudFormationTemplate;
+    const resources = compiledTemplate.Resources;
+
+    const validators = this.filterResourcesByType(resources, 'AWS::ApiGateway::RequestValidator');
+    this.log(`Found ${validators.length} request validator(s)`);
+
+    if (validators.length === 0) {
+      return;
+    }
+
+    switch (action) {
+      default:
+        throw new Error(`Invalid action provided in custom.${this.pluginName}.action`);
+      case PluginAction.DISABLE:
+        {
+          validators.forEach((v) => this.disableValidator(v));
+          break;
+        }
+      case PluginAction.DELETE:
+        {
+          validators.forEach((v) => this.deleteValidator(v.name, resources));
+          break;
+        }
+    }
+  }
+
+  deleteValidator(validatorRef: string, resources: Serverless.CfnResourceList) {
+    const methods = this.filterResourcesByType(resources, 'AWS::ApiGateway::Method');
+    this.log(`Found ${methods.length} method(s)`);
+    methods.forEach((m) => this.deleteValidatorRefFromMethod(validatorRef, m));
+
+    const validator = resources[validatorRef];
+    if (!validator) {
+      return;
+    }
+    delete resources[validatorRef];
+    this.log(`Deleted request validator '${validatorRef}' from template`);
+  }
+
+  deleteValidatorRefFromMethod(validatorRef: string, method: CfnResourcePair) {
+    const properties = method.resource.Properties;
+    const validatorId = properties['RequestValidatorId'];
+    if (!validatorId || validatorRef !== validatorId['Ref']) {
+      return;
+    }
+    delete properties['RequestValidatorId'];
+    this.log(`Deleted reference to request validator from method '${method.name}'`);
+  }
+
+  disableValidator(validator: CfnResourcePair) {
+    const properties = validator.resource.Properties;
     properties['ValidateRequestBody'] = false;
     properties['ValidateRequestParameters'] = false;
-    // An example of generated validator name is "service-name | Validate request body and querystring parameters"
-    const validatorName = properties['Name'].split(' | ')[0];
-    this.log(`Disabled request validator named '${validatorName}'`);
+    const validatorName = validator.name;
+    this.log(`Disabled validations from request validator '${validatorName}'`);
   }
 }
 

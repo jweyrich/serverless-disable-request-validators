@@ -1,11 +1,14 @@
 # serverless-disable-request-validators
-[![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com) [![npm version](https://badge.fury.io/js/serverless-disable-request-validators.svg)](https://badge.fury.io/js/serverless-disable-request-validators) [![Build Status](https://travis-ci.org/jweyrich/serverless-disable-request-validators.svg?branch=master)](https://travis-ci.org/jweyrich/serverless-disable-request-validators)
+
+[![serverless](http://public.serverless.com/badges/v2.svg)](http://www.serverless.com) [![npm version](https://badge.fury.io/js/serverless-disable-request-validators.svg)](https://badge.fury.io/js/serverless-disable-request-validators) [![Build Status](https://travis-ci.org/jweyrich/serverless-disable-request-validators.svg?branch=master)](https://travis-ci.org/jweyrich/serverless-disable-request-validators)
 
 Serverless v2 plugin to disable API Gateway request validators.
 
 ## What it does
 
-It gives you the [ability to disable the API Gateway Request Validator on v2](https://github.com/serverless/serverless/issues/10229) until the Serverless Framework team introduces an opt-out flag or another mechanism to avoid the [automatic creation of Request Validators in API Gateway](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/#request-schema-validators) when your Lambda functions have an schema associated with them.
+It gives you the [ability to disable or remove the API Gateway Request Validator on Serverless v2](https://github.com/serverless/serverless/issues/10229) until the Serverless Framework team introduces an opt-out flag or another mechanism to avoid the [automatic creation of Request Validators in API Gateway](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/#request-schema-validators) when your Lambda functions have an schema associated with them.
+
+If you have all request validations implemented in your Lambda, you probably don't to use the API Gateway Request Validator.
 
 There are 3 legitimate use cases for these schemas:
 
@@ -34,4 +37,22 @@ plugins:
 
 ## Configure
 
-No extra configuration is required in this version! ;-)
+You can configure the plugin behavior using the `custom` section in your `serverless.yml` file.
+
+1. To disable the `body` and `parameters` validations directly in the validator resources:
+
+```yaml
+custom:
+  serverless-disable-request-validators:
+    action: disable
+```
+
+2. To delete the AWS::ApiGateway::RequestValidator resources and all their references:
+
+```yaml
+custom:
+  serverless-disable-request-validators:
+    action: delete
+```
+
+If no custom configuration is provided, the default `action` is `disable`.

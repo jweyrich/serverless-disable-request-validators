@@ -29,10 +29,12 @@ declare namespace Serverless {
     pluginManager: PluginManager
   }
 
+  type CfnResourceList = {
+    [key: string]: CfnResource
+  }
+
   interface CloudFormationTemplate {
-    Resources: {
-      [key: string]: CfnResource
-    }
+    Resources: CfnResourceList
   }
 
   type CfnResourceType = string
