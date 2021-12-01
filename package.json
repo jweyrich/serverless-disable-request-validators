@@ -1,6 +1,6 @@
 {
   "name": "serverless-disable-request-validators",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Serverless plugin to disable Request Validators from API Gateway",
   "author": "Jardel Weyrich",
   "license": "MIT",
@@ -65,6 +65,7 @@
   "devDependencies": {
     "@types/node": "^14.14.25",
     "jest": "24.5.0",
+    "standard-version": "^9.3.2",
     "ts-jest": "24.0.2",
     "ts-node": "^9.1.1",
     "tsconfig-paths": "^3.9.0",
