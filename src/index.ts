@@ -6,6 +6,10 @@ interface CfnResourcePair {
 enum PluginAction {
   // Disable the `body` and `parameters` validations directly in the validator resources.
   DISABLE = 'disable',
+
+  // Delete references from AWS::ApiGateway::Method to the AWS::ApiGateway::RequestValidator resources.
+  DISASSOCIATE = 'disassociate',
+
   // Delete the AWS::ApiGateway::RequestValidator resources and all their references.
   DELETE = 'delete',
 }
@@ -86,6 +90,11 @@ class Plugin {
           validators.forEach((v) => this.disableValidator(v));
           break;
         }
+      case PluginAction.DISASSOCIATE:
+        {
+          validators.forEach((v) => this.disassociateValidator(v.name, resources));
+          break;
+        }
       case PluginAction.DELETE:
         {
           validators.forEach((v) => this.deleteValidator(v.name, resources));
@@ -94,10 +103,14 @@ class Plugin {
     }
   }
 
-  deleteValidator(validatorRef: string, resources: Serverless.CfnResourceList) {
+  disassociateValidator(validatorRef: string, resources: Serverless.CfnResourceList) {
     const methods = this.filterResourcesByType(resources, 'AWS::ApiGateway::Method');
     this.log(`Found ${methods.length} method(s)`);
     methods.forEach((m) => this.deleteValidatorRefFromMethod(validatorRef, m));
+  }
+
+  deleteValidator(validatorRef: string, resources: Serverless.CfnResourceList) {
+    this.disassociateValidator(validatorRef, resources);
 
     const validator = resources[validatorRef];
     if (!validator) {

@@ -20,8 +20,8 @@ declare namespace Serverless {
       package: Serverless.Package
       getAllFunctions(): string[]
       custom?: {
-        serverlessPluginTypescript?: {
-          tsConfigFileLocation: string
+        'serverless-disable-request-validators'?: {
+          action: string
         }
       }
     }
